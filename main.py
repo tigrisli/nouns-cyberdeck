@@ -35,8 +35,8 @@ try:
     HRYimage = Image.new('1', (epd.height, epd.width), 255)  # 298*126  ryimage: red or yellow image  
     drawblack = ImageDraw.Draw(HBlackimage)
     drawry = ImageDraw.Draw(HRYimage)
-    drawblack.text((10, 0), 'Nouns Dao', font = font20, fill = 0)
-    drawblack.text((10, 20), 'this is a test', font = font20, fill = 0)
+    drawblack.text((10, 0), 'hello world', font = font20, fill = 0)
+    drawblack.text((10, 20), '2.13inch e-Paper bc', font = font20, fill = 0)
     drawblack.text((120, 0), u'微雪电子', font = font20, fill = 0)    
     drawblack.line((20, 50, 70, 100), fill = 0)
     drawblack.line((70, 50, 20, 100), fill = 0)
@@ -68,8 +68,8 @@ try:
     time.sleep(2)
     
     logging.info("3.read bmp file")
-    Blackimage = Image.open(os.path.join(picdir, 'NounsAuction.bmp'))
-    RYimage = Image.open(os.path.join(picdir, 'NounsAuction.bmp'))
+    Blackimage = Image.open(os.path.join(picdir, '2in13bc-b.bmp'))
+    RYimage = Image.open(os.path.join(picdir, '2in13bc-ry.bmp'))
     epd.display(epd.getbuffer(Blackimage), epd.getbuffer(RYimage))
     time.sleep(2)
     
