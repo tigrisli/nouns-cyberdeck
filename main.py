@@ -2,8 +2,8 @@
 # -*- coding:utf-8 -*-
 import sys
 import os
-picdir = os.path.join(os.path.dirname(__file__), 'pic')
-libdir = os.path.join(os.path.dirname(__file__), 'lib')
+picdir = os.path.join(os.getcwd(), 'pic')
+libdir = os.path.join(os.getcwd(), 'lib')
 if os.path.exists(libdir):
     sys.path.append(libdir)
 
