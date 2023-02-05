@@ -1,3 +1,5 @@
+import sys
+import os
 libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib')
 if os.path.exists(libdir):
     sys.path.append(libdir)
@@ -44,7 +46,7 @@ epd = epd2in13_V3.EPD()
 epd.init()
 
 # Create an image with the information
-image = Image.new('1', (epd.height, epd.weight), 255)  # 255: clear the frame
+image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
 draw = ImageDraw.Draw(image)
 
 # Draw the information on the image
