@@ -1,51 +1,63 @@
-#!/usr/bin/python
-# -*- coding:utf-8 -*-
-import sys
-import os
-picdir = os.path.join(os.path.realpath(__file__), 'pic')
-libdir = os.path.join(os.path.realpath(__file__), 'lib')
+libdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'lib')
 if os.path.exists(libdir):
     sys.path.append(libdir)
 
+import requests
 import logging
 from waveshare_epd import epd2in13b_V3
 import time
 from PIL import Image,ImageDraw,ImageFont
 import traceback
 
-logging.basicConfig(level=logging.DEBUG)
 
-try:
-    logging.info("Nouns Cyberdeck")
-    
-    epd = epd2in13b_V3.EPD()
-    logging.info("init and Clear")
-    epd.init()
-    epd.Clear()
-    time.sleep(1)
-    
-    # Drawing on the image
-    logging.info("Drawing")    
-    font20 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 20)
-    font18 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 18)
-    
-    logging.info("3.read bmp file")
-    Blackimage = Image.open(os.path.join(picdir, '2in13bc-b.bmp'))
-    RYimage = Image.open(os.path.join(picdir, '2in13bc-ry.bmp'))
-    epd.display(epd.getbuffer(Blackimage), epd.getbuffer(RYimage))
-    time.sleep(5)
-    
-    logging.info("Clear...")
-    epd.init()
-    epd.Clear()
-    
-    logging.info("Goto Sleep...")
-    epd.sleep()
-        
-except IOError as e:
-    logging.info(e)
-    
-except KeyboardInterrupt:    
-    logging.info("ctrl + c:")
-    epd2in13b_V3.epdconfig.module_exit()
-    exit()
+# Send the GraphQL query to retrieve the information
+query = """
+{
+  nouns {
+    id
+    seed {
+      background
+      body
+      accessory
+      head
+      glasses
+    }
+    owner {
+      id
+    }
+  }
+}
+"""
+
+url = "https://api.thegraph.com/subgraphs/name/nounsdao/nouns-subgraph"
+
+response = requests.post(url, json={'query': query})
+
+if response.status_code == 200:
+    result = response.json()
+else:
+    raise Exception("Query failed to run by returning code of {}. {}".format(response.status_code, response.text))
+
+
+# Initialize the display
+epd = epd2in13_V3.EPD()
+epd.init()
+
+# Create an image with the information
+image = Image.new('1', (epd.height, epd.weight), 255)  # 255: clear the frame
+draw = ImageDraw.Draw(image)
+
+# Draw the information on the image
+font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSans.ttf', 16)
+
+text = result["data"]["nouns"][0]["id"]
+draw.text((10, 10), text, font=font, fill=0)
+
+text = result["data"]["nouns"][0]["owner"]["id"]
+draw.text((10, 30), text, font=font, fill=0)
+
+# Display the image on the e-ink display
+epd.display(epd.getbuffer(image))
+
+# Close the display
+epd.sleep()
