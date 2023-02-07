@@ -1,44 +1,60 @@
 import requests
-import logging
-from waveshare_epd import epd2in13b_V3
-import time
 import base64
 import cv2
 import numpy as np
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image
 import traceback
+from waveshare_epd import epd2in13b_V3
 
-import sys
-import os
-libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib')
-if os.path.exists(libdir):
-    sys.path.append(libdir)
-
-
+# Set the query to fetch the seed data from the Nouns subgraph API
 url = "https://api.thegraph.com/subgraphs/name/nounsdao/nouns-subgraph"
+query = '''
+query {
+  auctions(orderDirection: desc, orderBy: startTime) {
+    id
+    amount
+    startTime
+    endTime
+    bids(orderDirection: desc,orderBy:amount) {
+      id
+      amount
+      blockNumber
+      txIndex
+      noun {
+        id
+        seed {
+          background
+          body
+          accessory
+          head
+          glasses
+        }
+      }
+    }
+  }
+}
+'''
 
-# Fetch the image seed data from the Nouns Subgraph API without the background
-response = requests.get(url, params={
-    "query": "query { noun(id: 1) { seed { body accessory head glasses } } }"
-})
-
+# Fetch the seed data from the Nouns subgraph API
+response = requests.post(url, json={'query': query})
 if response.status_code == 200:
     result = response.json()
 else:
     raise Exception("Query failed to run by returning code of {}. {}".format(response.status_code, response.text))
 
-
-# Parse the JSON response
+# Parse the JSON response to get the seed data
 data = response.json()
 
-# Get the image seed data without the background
-seed = data["data"]["noun"]["seed"]
+# Get the seed data of the first bid in the first auction
+seed = data["data"]["auctions"][0]["bids"][0]["noun"]["seed"]
 
-# Convert the seed data to a base64 encoded SVG string without the background
-svg = ... # The code to convert the seed to an SVG string without the background
-b64 = base64.b64encode(svg.encode()).decode()
+# Build the SVG image using the `getNoun` function from the previous code example
+noun = getNoun(seed=seed)
 
-# The final base64 encoded SVG string without the background
+# Convert the seed data to a base64 encoded SVG string
+b64 = base64.b64encode(noun["image"].encode()).decode()
+
+# The final base64 encoded SVG string
 image_data = f"data:image/svg+xml;base64,{b64}"
 
 # Load the image data into a NumPy array
@@ -50,15 +66,11 @@ img = cv2.resize(img, (122, 122), interpolation = cv2.INTER_CUBIC)
 # Save the resized image to a file
 cv2.imwrite("resized_image.bmp", img)
 
-# Display the resized image on the Waveshare 2in13v3 e-ink display
-... # The code to display the image on the e-ink display
-
 # Initialize the display
-epd = epd2in13_V3.EPD()
+epd = epd2in13b_V3.EPD()
 epd.init()
 
-
-# Load background image
+# Load the resized image
 noun_image = Image.open("resized_image.bmp")
 
 # Create an image with the information
@@ -66,8 +78,6 @@ image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
 image.paste(noun_image)
 draw = ImageDraw.Draw(image)
 
-# Display the image on the e-ink display
-epd.display(epd.getbuffer(image))
-
-# Close the display
+# Display the resized image on the Waveshare 2in13b e-ink display
+epd.display(epd.getbuffer(noun_image))
 epd.sleep()
