@@ -2,7 +2,7 @@ import requests
 import base64
 import cv2
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 import traceback
 from waveshare_epd import epd2in13b_V3
 
@@ -36,17 +36,16 @@ query {
 '''
 
 # Fetch the seed data from the Nouns subgraph API
-response = requests.post(url, json={'query': query})
-if response.status_code == 200:
+try:
+    response = requests.post(url, json={'query': query})
+    response.raise_for_status()
     result = response.json()
-else:
-    raise Exception("Query failed to run by returning code of {}. {}".format(response.status_code, response.text))
-
-# Parse the JSON response to get the seed data
-data = response.json()
+except Exception as e:
+    print(f"Error fetching data from Nouns subgraph API: {e}")
+    traceback.print_exc()
 
 # Get the seed data of the first bid in the first auction
-seed = data["data"]["auctions"][0]["bids"][0]["noun"]["seed"]
+seed = result["data"]["auctions"][0]["bids"][0]["noun"]["seed"]
 
 # Build the SVG image using the `getNoun` function from the previous code example
 noun = getNoun(seed=seed)
@@ -58,20 +57,17 @@ b64 = base64.b64encode(noun["image"].encode()).decode()
 image_data = f"data:image/svg+xml;base64,{b64}"
 
 # Load the image data into a NumPy array
-img = cv2.imdecode(np.frombuffer(base64.b64decode(image_data.split(',')[1]), np.uint8), cv2.IMREAD_UNCHANGED)
+img = np.array(Image.open(BytesIO(base64.b64decode(image_data.split(',')[1].encode()))))
 
 # Resize the image to 122x122
 img = cv2.resize(img, (122, 122), interpolation = cv2.INTER_CUBIC)
-
-# Save the resized image to a file
-cv2.imwrite("resized_image.bmp", img)
 
 # Initialize the display
 epd = epd2in13b_V3.EPD()
 epd.init()
 
 # Load the resized image
-noun_image = Image.open("resized_image.bmp")
+noun_image = Image.fromarray(img)
 
 # Create an image with the information
 image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
