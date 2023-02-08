@@ -44,6 +44,22 @@ except Exception as e:
     print(f"Error fetching data from Nouns subgraph API: {e}")
     traceback.print_exc()
 
+def getNoun(seed):
+    if "id" in seed:
+        id = str(seed["id"])
+        name = "Noun {}".format(id)
+        description = "Noun {} is a member of the Nouns DAO".format(id)
+        parts, background = get_noun_data(seed)
+        image = "data:image/svg+xml;base64,{}".format(base64.b64encode(build_svg(parts, seed["palette"], background).encode()).decode())
+
+        return {
+            "name": name,
+            "description": description,
+            "image": image
+        }
+    else:
+        return {}
+
 # Get the seed data of the first bid in the first auction
 seed = result["data"]["auctions"][0]["bids"][0]["noun"]["seed"]
 
