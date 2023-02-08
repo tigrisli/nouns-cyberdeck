@@ -124,6 +124,10 @@ else:
 # The final base64 encoded SVG string
 image_data = f"data:image/svg+xml;base64,{b64}"
 
+# Convert base 64 encoded SVG string to an image
+img = Image.open(BytesIO(base64.b64decode(b64)))
+img.show()
+
 # Load the image data into a NumPy array
 img = np.array(Image.open(BytesIO(base64.b64decode(image_data.split(',')[1].encode()))))
 
