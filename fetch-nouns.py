@@ -116,7 +116,8 @@ noun = getNoun(seed=seed)
 
 # Convert the seed data to a base64 encoded SVG string
 if "image" in noun:
-    b64 = base64.b64encode(noun["image"].encode()).decode()
+    svg_string = noun["image"].replace("data:image/svg+xml;base64,", "").encode()
+    b64 = base64.b64encode(svg_string).decode()
 else:
     print(f"Error fetching image")
 
