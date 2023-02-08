@@ -1,3 +1,9 @@
+import sys
+import os
+libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib')
+if os.path.exists(libdir):
+    sys.path.append(libdir)
+
 import requests
 import base64
 import cv2
@@ -5,6 +11,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 import traceback
 from waveshare_epd import epd2in13b_V3
+from io import BytesIO
 
 # Set the query to fetch the seed data from the Nouns subgraph API
 url = "https://api.thegraph.com/subgraphs/name/nounsdao/nouns-subgraph"
@@ -35,14 +42,46 @@ query {
 }
 '''
 
-# Fetch the seed data from the Nouns subgraph API
-try:
-    response = requests.post(url, json={'query': query})
-    response.raise_for_status()
-    result = response.json()
-except Exception as e:
-    print(f"Error fetching data from Nouns subgraph API: {e}")
-    traceback.print_exc()
+def build_svg(noun_data, palette, background):
+    # Create a string that will hold the svg image
+    svg_image = ""
+
+    # Add the opening tag of the svg element
+    svg_image += '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">'
+
+    # Add the background element
+    svg_image += f'<rect width="100" height="100" fill="{palette[background]}"/>'
+
+    # Add the body element
+    svg_image += f'<circle cx="50" cy="50" r="35" fill="{palette[noun_data["body"]]}"/>'
+
+    # Add the accessory element
+    svg_image += f'<rect x="40" y="40" width="20" height="20" fill="{palette[noun_data["accessory"]]}"/>'
+
+    # Add the head element
+    svg_image += f'<circle cx="50" cy="35" r="15" fill="{palette[noun_data["head"]]}"/>'
+
+    # Add the glasses element
+    svg_image += f'<rect x="45" y="30" width="10" height="5" fill="{palette[noun_data["glasses"]]}"/>'
+    svg_image += f'<rect x="45" y="35" width="10" height="5" fill="{palette[noun_data["glasses"]]}"/>'
+
+    # Close the svg tag
+    svg_image += "</svg>"
+
+    return svg_image
+    
+
+def get_noun_data(seed):
+    # Retrieve data from noun parts
+    noun_data = {
+      "body": seed["body"],
+      "accessory": seed["accessory"],
+      "head": seed["head"],
+      "glasses": seed["glasses"]
+    }
+    palette = seed["palette"]
+
+    return noun_data, palette
 
 def getNoun(seed):
     if "id" in seed:
@@ -59,6 +98,15 @@ def getNoun(seed):
         }
     else:
         return {}
+
+# Fetch the seed data from the Nouns subgraph API
+try:
+    response = requests.post(url, json={'query': query})
+    response.raise_for_status()
+    result = response.json()
+except Exception as e:
+    print(f"Error fetching data from Nouns subgraph API: {e}")
+    traceback.print_exc()
 
 # Get the seed data of the first bid in the first auction
 seed = result["data"]["auctions"][0]["bids"][0]["noun"]["seed"]
