@@ -69,7 +69,7 @@ def build_svg(noun_data, palette, background):
     svg_image += "</svg>"
 
     return svg_image
-    
+
 
 def get_noun_data(seed):
     # Retrieve data from noun parts
@@ -115,7 +115,10 @@ seed = result["data"]["auctions"][0]["bids"][0]["noun"]["seed"]
 noun = getNoun(seed=seed)
 
 # Convert the seed data to a base64 encoded SVG string
-b64 = base64.b64encode(noun["image"].encode()).decode()
+if "image" in noun:
+    b64 = base64.b64encode(noun["image"].encode()).decode()
+else:
+    print(f"Error fetching image")
 
 # The final base64 encoded SVG string
 image_data = f"data:image/svg+xml;base64,{b64}"
