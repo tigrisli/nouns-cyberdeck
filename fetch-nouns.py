@@ -52,7 +52,7 @@ def getNoun(seed):
         parts, background = get_noun_data(seed)
         image = "data:image/svg+xml;base64,{}".format(base64.b64encode(build_svg(parts, seed["palette"], background).encode()).decode())
 
-        return {
+        noun = {
             "name": name,
             "description": description,
             "image": image
