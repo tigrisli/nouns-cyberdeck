@@ -68,7 +68,7 @@ draw_black.text((5, 3), title_text, font=font, fill=255)
 
 y = 30
 AVERAGE_BLOCK_TIME_IN_SECS = 15
-timestamp = datetime.time()
+timestamp = time.time()
 
 for proposal in result["data"]["proposals"]:
     if proposal["status"] == "ACTIVE":
@@ -77,18 +77,17 @@ for proposal in result["data"]["proposals"]:
         endBlock = proposal["endBlock"]
 
         endBlock = int(proposal["endBlock"])
-        currentBlock = int(result["data"]["proposals"][0]["endBlock"])
+        currentBlock = int(result["data"]["proposals"][0]["startBlock"])
         createdTimestamp = int(proposal["createdTimestamp"])
 
-        endDate = datetime.fromtimestamp(createdTimestamp) + timedelta(seconds=AVERAGE_BLOCK_TIME_IN_SECS * (endBlock - currentBlock))
+        endTimestamp = createdTimestamp + AVERAGE_BLOCK_TIME_IN_SECS * (endBlock - currentBlock)
+        endDate = datetime.fromtimestamp(endTimestamp)
         endDate_text = endDate.strftime("%d/%m/%Y %H:%M")
 
         draw_black.text((5, y), id_text, font=font, fill=0)
 
         # If the title overflows, go to the next line
-        title_overflows = False
         if draw_red.textsize(title_text, font=font)[0] > epd.width - (-20):
-            title_overflows = True
             words = title_text.split()
             line = ''
             for word in words:
@@ -102,11 +101,10 @@ for proposal in result["data"]["proposals"]:
         else:
             draw_red.text((38, y), title_text, font=font, fill=0)
 
-        if title_overflows:
-            y += 15
         draw_black.text((5, y), endDate_text, font=font, fill=0)
 
         y += 25
+
 
 
 # Display the image on the e-ink display
