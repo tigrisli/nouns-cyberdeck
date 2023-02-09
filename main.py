@@ -6,7 +6,7 @@ if os.path.exists(libdir):
 
 import requests
 import logging
-from waveshare_epd import epd2in13b_V3
+from waveshare_epd import epd2in13_V3
 import time
 from PIL import Image,ImageDraw,ImageFont
 import traceback
