@@ -6,10 +6,12 @@ if os.path.exists(libdir):
 
 import requests
 import logging
-from waveshare_epd import epd2in13_V3
+from waveshare_epd import epd2in13b_V3
 import time
 from PIL import Image,ImageDraw,ImageFont
 import traceback
+import time
+from datetime import datetime, timedelta
 
 
 # Send the GraphQL query to retrieve the information
@@ -22,7 +24,9 @@ query = """
     }
     status
     title
+    startBlock
     endBlock
+    createdTimestamp
   }
 }
 """
@@ -38,28 +42,65 @@ else:
 
 
 # Initialize the display
-epd = epd2in13_V3.EPD()
+epd = epd2in13b_V3.EPD()
 epd.init()
 
 # Load background image
-background_image = Image.open("Proposals-BG.bmp")
+background_image = Image.open("Proposal-glasses.bmp")
+background_red_image = Image.open("Proposals-BG-RED.bmp")
 
 # Create an image with the information
-image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
-image.paste(background_image)
-draw = ImageDraw.Draw(image)
+black_image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
+black_image.paste(background_image)
+
+red_image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
+red_image.paste(background_red_image)
+
+draw_black = ImageDraw.Draw(black_image)
+draw_red = ImageDraw.Draw(red_image)
 
 # Draw the information on the image
 font = ImageFont.truetype('./fonts/LondrinaSolid-Regular.ttf', 16)
 
-text = result["data"]["proposals"][0]["id"]
-draw.text((10, 10), text, font=font, fill=255)
+title_text = "ACTIVE PROPS"
+draw_black.text((5, 3), title_text, font=font, fill=255)
 
-text = result["data"]["proposals"][0]["status"]
-draw.text((10, 30), text, font=font, fill=255)
+
+y = 30
+AVERAGE_BLOCK_TIME_IN_SECS = 15
+currentBlock = result["data"]["proposals"][0]["endBlock"]
+timestamp = time.time()
+
+for proposal in result["data"]["proposals"]:
+    if proposal["status"] == "ACTIVE":
+        id_text = proposal["id"]
+        title_text = proposal["title"]
+        endBlock = proposal["endBlock"]
+        createdTimestamp = int(proposal["createdTimestamp"])
+        endDate = datetime.fromtimestamp(createdTimestamp) + timedelta(seconds=AVERAGE_BLOCK_TIME_IN_SECS * (endBlock - currentBlock))
+        endDate_text = endDate.strftime("%d/%m/%Y %H:%M")
+        draw_black.text((5, y), id_text, font=font, fill=0)
+
+        # If the title overflows, go to the next line
+        if draw_red.textsize(title_text, font=font)[0] > epd.width - (-20):
+            words = title_text.split()
+            line = ''
+            for word in words:
+                if draw_red.textsize(line + word, font=font)[0] <= epd.width - (-20):
+                    line += word + ' '
+                else:
+                    draw_red.text((38, y), line, font=font, fill=0)
+                    y += 15
+                    line = word + ' '
+            draw_red.text((38, y), line, font=font, fill=0)
+        else:
+            draw_red.text((38, y), title_text, font=font, fill=0)
+
+        y += 25
+
 
 # Display the image on the e-ink display
-epd.display(epd.getbuffer(image))
+epd.display(epd.getbuffer(black_image), epd.getbuffer(red_image))
 
 # Close the display
 epd.sleep()
