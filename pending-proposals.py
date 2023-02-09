@@ -72,7 +72,7 @@ currentBlock = result["data"]["proposals"][0]["endBlock"]
 timestamp = time.time()
 
 for proposal in result["data"]["proposals"]:
-    if proposal["status"] == "ACTIVE":
+    if proposal["status"] == "PENDING":
         id_text = proposal["id"]
         title_text = proposal["title"]
         endBlock = proposal["endBlock"]
