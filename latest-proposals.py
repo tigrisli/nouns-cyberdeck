@@ -6,7 +6,7 @@ if os.path.exists(libdir):
 
 import requests
 import logging
-from waveshare_epd import epd2in13b_V3
+from waveshare_epd import epd2in13_V3
 import time
 from PIL import Image,ImageDraw,ImageFont
 import traceback
@@ -15,18 +15,14 @@ import traceback
 # Send the GraphQL query to retrieve the information
 query = """
 {
-  nouns {
+  proposals(orderBy: startBlock, orderDirection: desc) {
     id
-    seed {
-      background
-      body
-      accessory
-      head
-      glasses
-    }
-    owner {
+    proposer {
       id
     }
+    status
+    title
+    endBlock
   }
 }
 """
@@ -46,7 +42,7 @@ epd = epd2in13_V3.EPD()
 epd.init()
 
 # Load background image
-background_image = Image.open("Nouns602.bmp")
+background_image = Image.open("Proposals-BG.bmp")
 
 # Create an image with the information
 image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
@@ -54,13 +50,13 @@ image.paste(background_image)
 draw = ImageDraw.Draw(image)
 
 # Draw the information on the image
-font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSans.ttf', 16)
+font = ImageFont.truetype('./fonts/LondrinaSolid-Regular.ttf', 16)
 
-text = result["data"]["nouns"][0]["id"]
-draw.text((10, 10), text, font=font, fill=0)
+text = result["data"]["proposals"][0]["id"]
+draw.text((10, 10), text, font=font, fill=255)
 
-text = result["data"]["nouns"][0]["owner"]["id"]
-draw.text((10, 30), text, font=font, fill=0)
+text = result["data"]["proposals"][0]["status"]
+draw.text((10, 30), text, font=font, fill=255)
 
 # Display the image on the e-ink display
 epd.display(epd.getbuffer(image))
