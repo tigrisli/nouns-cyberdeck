@@ -46,7 +46,7 @@ epd = epd2in13_V3.EPD()
 epd.init()
 
 # Load background image
-background_image = Image.open("./images/Nouns602.bmp")
+background_image = Image.open("Nouns602.bmp")
 
 # Create an image with the information
 image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
