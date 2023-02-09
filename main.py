@@ -46,7 +46,7 @@ epd = epd2in13_V3.EPD()
 epd.init()
 
 # Load background image
-background_image = Image.open("Nouns602.bmp")
+background_image = Image.open("./images/Nouns602.bmp")
 
 # Create an image with the information
 image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
@@ -57,10 +57,10 @@ draw = ImageDraw.Draw(image)
 font = ImageFont.truetype('./fonts/LondrinaSolid-Regular.ttf', 16)
 
 text = result["data"]["nouns"][0]["id"]
-draw.text((10, 10), text, font=font, fill=0)
+draw.text((10, 10), text, font=font, fill=255)
 
 text = result["data"]["nouns"][0]["owner"]["id"]
-draw.text((10, 30), text, font=font, fill=0)
+draw.text((10, 30), text, font=font, fill=255)
 
 # Display the image on the e-ink display
 epd.display(epd.getbuffer(image))
