@@ -54,7 +54,7 @@ image.paste(background_image)
 draw = ImageDraw.Draw(image)
 
 # Draw the information on the image
-font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSans.ttf', 16)
+font = ImageFont.truetype('./fonts/LondrinaSolid-Regular.ttf', 16)
 
 text = result["data"]["nouns"][0]["id"]
 draw.text((10, 10), text, font=font, fill=0)
