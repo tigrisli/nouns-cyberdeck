@@ -80,10 +80,9 @@ for proposal in result["data"]["proposals"]:
         currentBlock = int(result["data"]["proposals"][0]["startBlock"])
         createdTimestamp = int(proposal["createdTimestamp"])
 
-        endTimestamp = createdTimestamp + AVERAGE_BLOCK_TIME_IN_SECS * (endBlock - currentBlock)
+        endTimestamp = int(proposal["createdTimestamp"]) + AVERAGE_BLOCK_TIME_IN_SECS * int(proposal["endBlock"] - proposal["startBlock"])
         endDate = datetime.fromtimestamp(endTimestamp)
         endDate_text = endDate.strftime("%d/%m/%Y %H:%M")
-
         draw_black.text((5, y), id_text, font=font, fill=0)
 
         # If the title overflows, go to the next line
