@@ -89,10 +89,15 @@ for proposal in result["data"]["proposals"]:
         print(" ")
         
         # Calculate the remaining time
-        remainingTime = (endBlock - currentBlock) * AVERAGE_BLOCK_TIME_IN_SECS
+        remainingTime = (endTimestamp - timestamp)
+
+        if remainingTime < 0:
+            remainingTime = 0
 
         # Format the remaining time as a string
         remainingTime_text = str(timedelta(seconds=remainingTime)).split(".")[0]
+
+        print(remainingTime_text)
 
         draw_black.text((5, y+12), remainingTime_text, font=font, fill=0)    
 
