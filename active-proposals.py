@@ -70,20 +70,31 @@ y = 30
 AVERAGE_BLOCK_TIME_IN_SECS = 15
 timestamp = time.time()
 
-
 for proposal in result["data"]["proposals"]:
     if proposal["status"] == "ACTIVE":
         id_text = proposal["id"]
         title_text = proposal["title"]
-        endBlock = proposal["endBlock"]
-
         endBlock = int(proposal["endBlock"])
         currentBlock = int(result["data"]["proposals"][0]["startBlock"])
         createdTimestamp = int(proposal["createdTimestamp"])
 
+        createdDate = datetime.fromtimestamp(createdTimestamp)
         endTimestamp = createdTimestamp + AVERAGE_BLOCK_TIME_IN_SECS * (endBlock - currentBlock)
+        # endDate before voting period starts
         endDate = datetime.fromtimestamp(endTimestamp)
-        endDate_text = endDate.strftime("%d/%m/%Y %H:%M")
+        
+        print(title_text)
+        print(createdDate)
+        print(endDate)
+        print(" ")
+        
+        # Calculate the remaining time
+        remainingTime = (endBlock - currentBlock) * AVERAGE_BLOCK_TIME_IN_SECS
+
+        # Format the remaining time as a string
+        remainingTime_text = str(timedelta(seconds=remainingTime)).split(".")[0]
+
+        draw_black.text((5, y+12), remainingTime_text, font=font, fill=0)    
 
         draw_black.text((5, y), id_text, font=font, fill=0)
 
@@ -101,8 +112,6 @@ for proposal in result["data"]["proposals"]:
             draw_red.text((38, y), line, font=font, fill=0)
         else:
             draw_red.text((38, y), title_text, font=font, fill=0)
-
-        draw_black.text((5, y), endDate_text, font=font, fill=0)
 
         y += 25
 
