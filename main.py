@@ -6,7 +6,7 @@ if os.path.exists(libdir):
 
 import requests
 import logging
-from waveshare_epd import epd2in13_V3
+from waveshare_epd import epd2in13b_V3
 import time
 from PIL import Image,ImageDraw,ImageFont
 import traceback
@@ -42,7 +42,7 @@ else:
 
 
 # Initialize the display
-epd = epd2in13_V3.EPD()
+epd = epd2in13b_V3.EPD()
 epd.init()
 
 # Load background image
@@ -63,7 +63,7 @@ text = result["data"]["nouns"][0]["owner"]["id"]
 draw.text((10, 30), text, font=font, fill=255)
 
 # Display the image on the e-ink display
-epd.display(epd.getbuffer(image))
+epd.display(epd.getbuffer(black_image), epd.getbuffer(black_image))
 
 # Close the display
 epd.sleep()
