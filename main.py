@@ -47,11 +47,17 @@ epd.init()
 
 # Load background image
 background_image = Image.open("Nouns602.bmp")
+background_red_image = Image.open("Nouns602.bmp")
 
-# Create an image with the information
-image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
-image.paste(background_image)
-draw = ImageDraw.Draw(image)
+# Create image
+black_image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
+black_image.paste(background_image)
+
+red_image = Image.new('1', (epd.height, epd.width), 255)  # 255: clear the frame
+red_image.paste(background_red_image)
+
+draw_black = ImageDraw.Draw(black_image)
+draw_red = ImageDraw.Draw(red_image)
 
 # Draw the information on the image
 font = ImageFont.truetype('./fonts/LondrinaSolid-Regular.ttf', 16)
