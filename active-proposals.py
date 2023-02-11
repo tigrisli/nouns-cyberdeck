@@ -13,6 +13,34 @@ import traceback
 import time
 from datetime import datetime, timedelta
 
+def getCountdownCopy(proposal, currentBlock, activeLocale):
+    endBlock = proposal["endBlock"]
+    startBlock = proposal["startBlock"]
+    blockDuration = endBlock - startBlock
+    totalDuration = blockDuration * AVERAGE_BLOCK_TIME_IN_SECS
+
+    remainingDuration = totalDuration - (currentBlock - startBlock) * AVERAGE_BLOCK_TIME_IN_SECS
+
+    remainingDays = int(remainingDuration / 86400)
+    remainingDuration -= remainingDays * 86400
+
+    remainingHours = int(remainingDuration / 3600)
+    remainingDuration -= remainingHours * 3600
+
+    remainingMinutes = int(remainingDuration / 60)
+    remainingDuration -= remainingMinutes * 60
+
+    remainingSeconds = int(remainingDuration)
+
+    if remainingDays > 0:
+        return str(remainingDays) + "d" + str(remainingHours) + "h" + str(remainingMinutes) + "m"
+    elif remainingHours > 0:
+        return str(remainingHours) + "h" + str(remainingMinutes) + "m" + str(remainingSeconds) + "s"
+    elif remainingMinutes > 0:
+        return str(remainingMinutes) + "m" + str(remainingSeconds) + "s"
+    else:
+        return str(remainingSeconds) + "s"
+
 
 # Send the GraphQL query to retrieve the information
 query = """
@@ -77,6 +105,9 @@ for proposal in result["data"]["proposals"]:
         endBlock = int(proposal["endBlock"])
         currentBlock = int(result["data"]["proposals"][0]["startBlock"])
         createdTimestamp = int(proposal["createdTimestamp"])
+
+        active_local = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        countdown = getCountdownCopy(proposal, currentBlock, active_local)
 
         createdDate = datetime.fromtimestamp(createdTimestamp)
         endTimestamp = createdTimestamp + AVERAGE_BLOCK_TIME_IN_SECS * (endBlock - currentBlock)
