@@ -63,7 +63,7 @@ text = result["data"]["nouns"][0]["owner"]["id"]
 draw.text((10, 30), text, font=font, fill=255)
 
 # Display the image on the e-ink display
-epd.display(epd.getbuffer(black_image), epd.getbuffer(black_image))
+epd.display(epd.getbuffer(image), epd.getbuffer(image))
 
 # Close the display
 epd.sleep()
