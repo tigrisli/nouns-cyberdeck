@@ -121,6 +121,8 @@ for proposal in result["data"]["proposals"]:
         
         print(f"Proposal ID: {id_text}")
         print(f"Title: {title_text}")
+        print(f"End Date: {endDate}")
+        print(f"Created Date: {createdDate}")
         print(f"Countdown: {countdown}")
         print(" ")
         
