@@ -272,6 +272,7 @@ epd.init()
 
 # Load the resized image
 noun_image = Image.fromarray(img)
+#noun_image = noun_image.transpose(Image.ROTATE_90)
 
 imageblack_h = Image.new('1',(epd.width ,epd.height),255)
 imageblack_draw = ImageDraw.Draw(imageblack_h)
@@ -279,7 +280,6 @@ imagered_h = Image.new('1',(epd.width ,epd.height),255)
 imagered_draw = ImageDraw.Draw(imagered_h)
 noun_image = noun_image.resize((120,120))
 noun_image = noun_image.convert('RGB')
-#noun_image = noun_image.transpose(Image.ROTATE_90)
 enhancer = ImageEnhance.Contrast(noun_image)
 image = enhancer.enhance(2)
 imagered_h.paste(noun_image,(2,16))
@@ -297,14 +297,16 @@ def get_time_remaining(start_time, end_time):
     time_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
     return time_remaining,time_str
 
+font = ImageFont.truetype('./fonts/LondrinaSolid-Regular.ttf', 16)
+
 noun_number = result["data"]["auctions"][0]["bids"][0]["noun"]["id"]
 current_bid = result["data"]["auctions"][0]["bids"][0]["amount"]
 current_bid = float(current_bid) / 1000000000000000000 # convert to ETH
 start_time = result["data"]["auctions"][0]["startTime"]
 end_time = result["data"]["auctions"][0]["endTime"]
-bid = f"Bid# {current_bid:.2f}"
-imageblack_draw.text((10, 120), "Noun#" + str(noun_number),  fill=0)
-imageblack_draw.text((10, 140), bid, fill=0)
+bid = f"Bid: {current_bid:.2f}ETH"
+imageblack_draw.text((10, 160), "Noun " + str(noun_number), font=font,  fill=0)
+imageblack_draw.text((10, 175), bid, font=font, fill=0)
 
 while True:
     
@@ -314,7 +316,7 @@ while True:
         break
 
     
-    imageblack_draw.text((10, 160), "# " + str(time_str), fill=0)
+    imageblack_draw.text((10, 190), str(time_str), font=font, fill=0)
         
     # Display the information on the e-ink display
     epd.display(imageblack_h.tobytes(), imagered_h.tobytes())
