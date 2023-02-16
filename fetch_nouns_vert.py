@@ -7,7 +7,7 @@ import json
 import cv2
 import cairosvg
 import numpy as np
-from PIL import Image, ImageDraw, ImageEnhance, ImageFont
+from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 from waveshare_epd import epd2in13b_V3
 from typing import List, Dict
 
@@ -270,7 +270,7 @@ epd = epd2in13b_V3.EPD()
 epd.init()
 #epd.Clear()
 
-# Load the resized image
+# Load the resized image + rotate 90
 noun_image = Image.fromarray(img)
 #noun_image = noun_image.transpose(Image.ROTATE_90)
 
@@ -280,6 +280,7 @@ imagered_h = Image.new('1',(epd.width ,epd.height),255)
 imagered_draw = ImageDraw.Draw(imagered_h)
 noun_image = noun_image.resize((140,140))
 noun_image = noun_image.convert('RGB')
+#noun_image = noun_image.transpose(Image.ROTATE_90)
 enhancer = ImageEnhance.Contrast(noun_image)
 image = enhancer.enhance(2)
 imagered_h.paste(noun_image,(-15,0))
@@ -299,13 +300,24 @@ def get_time_remaining(start_time, end_time):
 
 font = ImageFont.truetype('./fonts/LondrinaSolid-Regular.ttf', 16)
 
-noun_number = result["data"]["auctions"][0]["bids"][0]["noun"]["id"]
+if "auctions" in result["data"] and len(result["data"]["auctions"]) > 0 and "bids" in result["data"]["auctions"][0] and len(result["data"]["auctions"][0]["bids"]) > 0 and "noun" in result["data"]["auctions"][0]["bids"][0]:
+    noun_number = result["data"]["auctions"][0]["bids"][0]["noun"]["id"]
+    if len(result["data"]["auctions"][0]["bids"]) > 0:
+        current_bid = result["data"]["auctions"][0]["bids"][0]["amount"]
+    else:
+        current_bid = "0"
+else:
+    print("Error: Noun data not found")
+
+
 current_bid = result["data"]["auctions"][0]["bids"][0]["amount"]
 current_bid = float(current_bid) / 1000000000000000000 # convert to ETH
+bid = f"Bid: {current_bid:.2f}ETH"
+
 start_time = result["data"]["auctions"][0]["startTime"]
 end_time = result["data"]["auctions"][0]["endTime"]
-bid = f"Bid: {current_bid:.2f}ETH"
-imageblack_draw.text((10, 160), "Noun " + str(noun_number), font=font,  fill=0)
+
+imageblack_draw.text((10, 160), "Noun: " + str(noun_number), font=font,  fill=0)
 imageblack_draw.text((10, 175), bid, font=font, fill=0)
 
 while True:
@@ -315,12 +327,11 @@ while True:
     if time_remaining <= 5:
         break
 
-    
     imageblack_draw.text((10, 190), str(time_str), font=font, fill=0)
         
     # Display the information on the e-ink display
     epd.display(imageblack_h.tobytes(), imagered_h.tobytes())
         
     # Wait for 1 second before updating the display again
-    time.sleep(60)
+    time.sleep(180)
     
