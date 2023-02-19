@@ -14,6 +14,32 @@ import time
 from datetime import datetime, timedelta
 
 
+def getCountdownCopy(remainingDuration):
+
+    if remainingDuration < 0:
+        return "0s"
+
+    remainingDays = int(remainingDuration / 86400)
+    remainingDuration -= remainingDays * 86400
+
+    remainingHours = int(remainingDuration / 3600)
+    remainingDuration -= remainingHours * 3600
+
+    remainingMinutes = int(remainingDuration / 60)
+    remainingDuration -= remainingMinutes * 60
+
+    remainingSeconds = int(remainingDuration)
+
+    if remainingDays > 0:
+        return str(remainingDays) + "d " + str(remainingHours) + "h " + str(remainingMinutes) + "m"
+    elif remainingHours > 0:
+        return str(remainingHours) + "h " + str(remainingMinutes) + "m " + str(remainingSeconds) + "s"
+    elif remainingMinutes > 0:
+        return str(remainingMinutes) + "m " + str(remainingSeconds) + "s"
+    else:
+        return str(remainingSeconds) + "s"
+
+
 # Send the GraphQL query to retrieve the information
 query = """
 {
@@ -31,7 +57,7 @@ query = """
 }
 """
 
-url = "https://api.thegraph.com/subgraphs/name/nounsdao/nouns-subgraph"
+url = "https://api.goldsky.com/api/public/project_cldf2o9pqagp43svvbk5u3kmo/subgraphs/nouns/0.1.0/gn"
 
 response = requests.post(url, json={'query': query})
 
@@ -67,20 +93,29 @@ draw_black.text((5, 3), title_text, font=font, fill=255)
 
 
 y = 30
-AVERAGE_BLOCK_TIME_IN_SECS = 15
-currentBlock = result["data"]["proposals"][0]["endBlock"]
-timestamp = time.time()
+AVERAGE_BLOCK_TIME_IN_SECS = 12
+#currentBlock = result["data"]["proposals"][0]["endBlock"]
+#timestamp = time.time()
 
 for proposal in result["data"]["proposals"]:
     if proposal["status"] == "PENDING":
         id_text = proposal["id"]
         title_text = proposal["title"]
-        endBlock = proposal["endBlock"]
+        startBlock = int(proposal["startBlock"])
+        endBlock = int(proposal["endBlock"])
         createdTimestamp = int(proposal["createdTimestamp"])
-        endDate = datetime.fromtimestamp(createdTimestamp) + timedelta(seconds=AVERAGE_BLOCK_TIME_IN_SECS * (endBlock - currentBlock))
-        endDate_text = endDate.strftime("%d/%m/%Y %H:%M")
-        draw_black.text((5, y), id_text, font=font, fill=0)
-
+        elapsedTime = int(time.time()) - createdTimestamp
+        totalTime = (endBlock - startBlock) * AVERAGE_BLOCK_TIME_IN_SECS
+        remainingTime = totalTime - elapsedTime
+        
+        endDate = timedelta(seconds=remainingTime)
+        countdown = getCountdownCopy(endDate.total_seconds())
+        #endDate_text = endDate.strftime("%d/%m/%Y %H:%M")
+        draw_black.text((5, y), "End#", font=font, fill=0)
+        draw_black.text((38, y), countdown, font=font, fill=0)
+        y = y + 15
+        draw_black.text((5,y),id_text,font=font,fill=0)
+        
         # If the title overflows, go to the next line
         if draw_red.textsize(title_text, font=font)[0] > epd.width - (-20):
             words = title_text.split()
@@ -97,6 +132,7 @@ for proposal in result["data"]["proposals"]:
             draw_red.text((38, y), title_text, font=font, fill=0)
 
         y += 25
+        
 
 
 # Display the image on the e-ink display

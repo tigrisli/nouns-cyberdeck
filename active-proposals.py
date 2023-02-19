@@ -11,15 +11,12 @@ import time
 from PIL import Image,ImageDraw,ImageFont
 import traceback
 import time
+import pytz
+from web3 import Web3
 from datetime import datetime, timedelta
 
-def getCountdownCopy(proposal, currentBlock, activeLocale):
-    endBlock = int(proposal["endBlock"])
-    startBlock = int(proposal["startBlock"])
-    blockDuration = endBlock - startBlock
-    totalDuration = blockDuration * AVERAGE_BLOCK_TIME_IN_SECS
+def getCountdownCopy(remainingDuration):
 
-    remainingDuration = totalDuration - (currentBlock - startBlock) * AVERAGE_BLOCK_TIME_IN_SECS
     if remainingDuration < 0:
         return "0s"
 
@@ -62,12 +59,13 @@ query = """
 }
 """
 
-url = "https://api.thegraph.com/subgraphs/name/nounsdao/nouns-subgraph"
+url = "https://api.goldsky.com/api/public/project_cldf2o9pqagp43svvbk5u3kmo/subgraphs/nouns/0.1.0/gn"
 
 response = requests.post(url, json={'query': query})
 
 if response.status_code == 200:
     result = response.json()
+    print(result)
 else:
     raise Exception("Query failed to run by returning code of {}. {}".format(response.status_code, response.text))
 
@@ -98,33 +96,59 @@ draw_black.text((5, 3), title_text, font=font, fill=255)
 
 
 y = 30
-AVERAGE_BLOCK_TIME_IN_SECS = 15
+AVERAGE_BLOCK_TIME_IN_SECS = 12
 timestamp = time.time()
+
+# Connect to the Ethereum node
+w3 = Web3(Web3.HTTPProvider("https://mainnet.infura.io/v3/a06aeb12512443dbb06c0e86dea5bc08"))
+
+# Get the current block number
+current_block = w3.eth.blockNumber
+
+def getCountdown(proposal, currentBlock):
+    now = datetime.now(pytz.UTC)
+
+    
+    startBlock = proposal.get('startBlock')
+    endBlock = proposal.get('endBlock')
+    timestamp = int(now.timestamp() * 1000)
+    print(f"Proposal: {proposal['id']}")
+    start_date = now + timedelta(seconds=AVERAGE_BLOCK_TIME_IN_SECS * (startBlock - currentBlock))
+    startDate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_date.timestamp()))
+    print(f"Starts: {startDate}")
+    end_date = now + timedelta(seconds=AVERAGE_BLOCK_TIME_IN_SECS * (endBlock - currentBlock))
+    endDate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_date.timestamp()))
+    print(f"Ends: {endDate}")
+    if start_date < now and end_date > now:
+        time_remaining = end_date - now
+        print(f"Time Remainig {time_remaining}")
+        
+        return startDate,endDate,time_remaining.total_seconds()
+    else:
+        return startDate,endDate,0
+
 
 for proposal in result["data"]["proposals"]:
     if proposal["status"] == "ACTIVE":
         id_text = proposal["id"]
         title_text = proposal["title"]
-        endBlock = int(proposal["endBlock"])
-        currentBlock = int(result["data"]["proposals"][0]["startBlock"])
-        createdTimestamp = int(proposal["createdTimestamp"])
-
-        active_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        countdown = getCountdownCopy(proposal, currentBlock, active_local)
-        #if countdown == "0s":
-            #continue  # skip proposal if countdown has reached 0
-
-        createdDate = datetime.fromtimestamp(createdTimestamp)
-        endTimestamp = createdTimestamp + AVERAGE_BLOCK_TIME_IN_SECS * (endBlock - currentBlock)
-        # endDate before voting period starts
-        endDate = datetime.fromtimestamp(endTimestamp)
         
-        print(f"Proposal ID: {id_text}")
         print(f"Title: {title_text}")
-        print(f"End Date: {endDate}")
-        print(f"Created Date: {createdDate}")
-        print(f"Countdown: {countdown}")
+        proposal['startBlock'] = int(proposal['startBlock'])
+        proposal['endBlock'] = int(proposal['endBlock'])
+        startDate,endDate,countdown = getCountdown(proposal,current_block)
+        if countdown == 0:
+            continue
         print(" ")
+        countdown = getCountdownCopy(countdown)
+        
+        #endDate_text = endDate.strftime("%d/%m/%Y %H:%M")
+        draw_black.text((5, y), "End#", font=font, fill=0)
+        draw_black.text((38, y), countdown, font=font, fill=0)
+        y = y + 15
+        draw_black.text((5,y),id_text,font=font,fill=0)
+        
+        
         
         # Calculate the remaining time
         #remainingTime = (endTimestamp - timestamp)
@@ -136,9 +160,9 @@ for proposal in result["data"]["proposals"]:
         #remainingTime_text = str(timedelta(seconds=remainingTime)).split(".")[0]
 
 
-        draw_black.text((100, y), countdown, font=font, fill=0)    
+        #draw_black.text((120, y), countdown, font=font, fill=0)    
 
-        draw_black.text((5, y), id_text, font=font, fill=0)
+        #draw_black.text((5, y), id_text, font=font, fill=0)
 
         # If the title overflows, go to the next line
         if draw_red.textsize(title_text, font=font)[0] > epd.width - (-20):
@@ -156,7 +180,8 @@ for proposal in result["data"]["proposals"]:
             draw_red.text((38, y), title_text, font=font, fill=0)
 
         y += 25
-
+        
+        
 
 # Display image on the e-ink display
 epd.display(epd.getbuffer(black_image), epd.getbuffer(red_image))

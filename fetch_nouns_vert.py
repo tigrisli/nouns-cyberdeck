@@ -201,7 +201,7 @@ def get_noun(noun_id, seed):
 
 
 # Set the query to fetch the seed data from the Nouns subgraph API
-url = "https://api.thegraph.com/subgraphs/name/nounsdao/nouns-subgraph"
+url = "https://api.goldsky.com/api/public/project_cldf2o9pqagp43svvbk5u3kmo/subgraphs/nouns/0.1.0/gn"
 query = '''
 query {
   auctions(orderDirection: desc, orderBy: startTime) {
@@ -237,8 +237,9 @@ try:
     result = response.json()
     # save the result to a file
     #with open("result.json", "w") as f:
-      #  import json
-     #   json.dump(result, f)
+        #import json
+        #json.dump(result, f)
+    print(response.json())
         
 except Exception as e:
     print(f"Error fetching data from Nouns subgraph API: {e}")
