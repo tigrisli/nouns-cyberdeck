@@ -12,29 +12,6 @@ from PIL import Image,ImageDraw,ImageFont
 import traceback
 import time
 from datetime import datetime, timedelta
-import RPi.GPIO as GPIO
-import buttonshim
-import subprocess
-
-def button_c_pressed():
-    subprocess.Popen(['python', 'pending_proposals.py'])
-    buttonshim.set_pixel(255, 0, 0)
-
-def button_d_pressed():
-    subprocess.Popen(['python', 'active_proposals.py'])
-    buttonshim.set_pixel(0, 255, 0)
-
-def button_e_pressed():
-    subprocess.Popen(['python', 'fetch_nouns_vert.py'])
-    buttonshim.set_pixel(0, 0, 255)
-
-# Set up Button SHIM
-button_shim = ButtonShim()
-
-# Define button handlers
-button_shim.set_handler('C', button_c_pressed)
-button_shim.set_handler('D', button_d_pressed)
-button_shim.set_handler('E', button_e_pressed)
 
 
 def getCountdownCopy(remainingDuration):
