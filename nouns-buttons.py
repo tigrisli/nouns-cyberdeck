@@ -1,45 +1,37 @@
-import RPi.GPIO as GPIO
-import time
-import subprocess
-import threading
+from buttonshim import ButtonShim
+from fetch_nouns_vert import *
+from active_proposals import *
+from pending_proposals import *
 
-class Control:
-    def __init__(self, button_pin_map):
-        self.buttons = []
-        GPIO.setmode(GPIO.BCM)
-        for pin, name in button_pin_map.items():
-            button = Button(name, pin)
-            self.buttons.append(button)
-            button.when_pressed = self.on_button_pressed
-        self.script_threads = {}
-    
-    def on_button_pressed(self, button):
-        if button.name in self.script_threads and self.script_threads[button.name].is_alive():
-            return
-        script_thread = threading.Thread(target=self.run_script, args=(button.script_name,))
-        self.script_threads[button.name] = script_thread
-        script_thread.start()
-    
-    def run_script(self, script_name):
-        subprocess.run(['python', script_name])
-            
-class Button:
-    def __init__(self, name, pin, script_name):
-        self.name = name
-        self.pin = pin
-        self.script_name = script_name
-        GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        self.when_pressed = None
-        GPIO.add_event_detect(self.pin, GPIO.FALLING, callback=self._on_pressed, bouncetime=500)
-    
-    def _on_pressed(self, pin):
-        if self.when_pressed is not None:
-            self.when_pressed(self)
+# Define button press functions
+def button_a_pressed():
+    print("Button A pressed")
 
-button_pin_map = {
-    26: ('E', 'fetch_nouns_vert.py'),
-    19: ('D', 'active-proposals.py'),
-    13: ('C', 'pending-proposals.py')
-}
+def button_b_pressed():
+    print("Button B pressed")
 
-control = Control({pin: Button(name, pin, script_name) for pin, (name, script_name) in button_pin_map.items()})
+def button_c_pressed():
+    pending_proposals_function()
+    print("Button C script finished running")
+
+def button_d_pressed():
+    active_proposals_function()
+    print("Button D script finished running")
+
+def button_e_pressed():
+    fetch_nouns_vert_function()
+    print("Button E script finished running")
+
+# Set up Button SHIM
+button_shim = ButtonShim()
+
+# Define button handlers
+button_shim.set_handler('A', button_a_pressed)
+button_shim.set_handler('B', button_b_pressed)
+button_shim.set_handler('C', button_c_pressed)
+button_shim.set_handler('D', button_d_pressed)
+button_shim.set_handler('E', button_e_pressed)
+
+# Start main loop
+while True:
+    button_shim.wait_for_press()

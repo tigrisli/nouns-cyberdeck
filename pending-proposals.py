@@ -88,7 +88,7 @@ draw_red = ImageDraw.Draw(red_image)
 # Draw the information on the image
 font = ImageFont.truetype('./fonts/LondrinaSolid-Regular.ttf', 16)
 
-title_text = "ACTIVE PROPS"
+title_text = "PENDING PROPS"
 draw_black.text((5, 3), title_text, font=font, fill=255)
 
 
