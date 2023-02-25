@@ -7,6 +7,8 @@ import time
 import signal
 import buttonshim
 
+from fetch_nouns_vert import *
+
 print("""
 Button SHIM: control-main.py
 
