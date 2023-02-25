@@ -13,29 +13,27 @@ import numpy as np
 import RPi.GPIO as GPIO
 import buttonshim
 import subprocess
+import signal
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
 from waveshare_epd import epd2in13b_V3
 from typing import List, Dict
 
-def button_c_pressed():
+@buttonshim.on_press(buttonshim.BUTTON_A)
+def button_a(button, pressed):
     subprocess.Popen(['python', 'pending_proposals.py'])
-    buttonshim.set_pixel(255, 0, 0)
+    buttonshim.set_pixel(0x94, 0x00, 0xd3)
 
-def button_d_pressed():
+@buttonshim.on_press(buttonshim.BUTTON_B)
+def button_b(button, pressed):
     subprocess.Popen(['python', 'active_proposals.py'])
-    buttonshim.set_pixel(0, 255, 0)
+    buttonshim.set_pixel(0x00, 0x00, 0xff)
 
-def button_e_pressed():
+@buttonshim.on_press(buttonshim.BUTTON_C)
+def button_c(button, pressed):
     subprocess.Popen(['python', 'fetch_nouns_vert.py'])
-    buttonshim.set_pixel(0, 0, 255)
+    buttonshim.set_pixel(0x00, 0xff, 0x00)
 
-# Set up Button SHIM
-button_shim = ButtonShim()
-
-# Define button handlers
-button_shim.set_handler('C', button_c_pressed)
-button_shim.set_handler('D', button_d_pressed)
-button_shim.set_handler('E', button_e_pressed)
+buttonshim.set_pixel(0x00, 0x00, 0x00)
 
 class NounSeed:
   def __init__(self, background: int, body: int, accessory: int, head: int, glasses: int):
