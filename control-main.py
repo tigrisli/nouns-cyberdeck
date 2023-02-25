@@ -44,7 +44,6 @@ while True:
    time.sleep(.1)
    if button_flag == "button_1":
        buttonshim.set_pixel(0x94, 0x00, 0xd3)
-       os.system('/usr/bin/python /home/tigris/nouns-cyberdeck/active-proposals.py')
        button_flag = "null"
    elif button_flag == "button_2":
        buttonshim.set_pixel(0x00, 0x00, 0xff)
