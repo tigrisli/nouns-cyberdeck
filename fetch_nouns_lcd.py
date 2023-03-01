@@ -30,26 +30,26 @@ class NounData:
     self.background = background
 
 
-
 def get_noun_data(seed: NounSeed) -> NounData:
-  global palette
-  # load the image data. This is a json file that contains the image data. Make sure you have the image-data.json file in the same directory as this file.
-  images = json.load(open("image-data.json"))
-  bgcolors = images['bgcolors']
-  palette = images['palette']
-  bodies = images['images']['bodies']
-  accessories = images['images']['accessories']
-  heads = images['images']['heads']
-  glasses = images['images']['glasses']
-  return NounData(
-    parts=[
-      bodies[int(seed['body'])],
-      accessories[int(seed['accessory'])],
-      heads[int(seed['head'])],
-      glasses[int(seed['glasses'])]
-    ],
-    background=bgcolors[int(seed['background'])]
-  )
+    global palette
+    # load the image data. This is a json file that contains the image data. Make sure you have the image-data.json file in the same directory as this file.
+    images = json.load(open("image-data.json"))
+    bgcolors = images['bgcolors']
+    palette = images['palette']
+    bodies = images['images']['bodies']
+    accessories = images['images']['accessories']
+    heads = images['images']['heads']
+    glasses = images['images']['glasses']
+    return NounData(
+        parts=[
+            bodies[int(seed['body'])],
+            accessories[int(seed['accessory'])],
+            heads[int(seed['head'])],
+            glasses[int(seed['glasses'])]
+        ],
+        background=tuple(bgcolors[int(seed['background'])])
+    )
+
 
 class IEncoder:
     def encode_image(self, filename: str, image):
