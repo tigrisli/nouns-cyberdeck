@@ -149,9 +149,10 @@ def get_rect_length(current_x, draw_length, right_bound):
     return draw_length if draw_length <= remaining_pixels_in_line else remaining_pixels_in_line
 
 def build_svg(parts, palette_colors, bg_color=None):
-    svg_without_end_tag = ""
+    svg_image = Image.new('RGBA', (320, 320), bg_color if bg_color else (0, 0, 0, 0))
+    draw = ImageDraw.Draw(svg_image)
+
     for part in parts:
-        svg_rects = []
         decoded_image = decode_image(part["data"])
         bounds = decoded_image["bounds"]
         rects = decoded_image["rects"]
@@ -167,9 +168,8 @@ def build_svg(parts, palette_colors, bg_color=None):
             length = get_rect_length(current_x, draw_length, bounds["right"])
             while length > 0:
                 if color_index != 0:
-                    svg_rects.append(
-                        f'<rect width="{length * 10}" height="10" x="{current_x * 10}" y="{current_y * 10}" fill="#{hex_color}" />'
-                    )
+                    draw_rect = (current_x * 10, current_y * 10, (current_x + length) * 10, (current_y + 1) * 10)
+                    draw.rectangle(draw_rect, fill=hex_color)
 
                 current_x += length
                 if current_x == bounds["right"]:
@@ -179,9 +179,8 @@ def build_svg(parts, palette_colors, bg_color=None):
                 draw_length -= length
                 length = get_rect_length(current_x, draw_length, bounds["right"])
 
-        svg_without_end_tag += "".join(svg_rects)
+    return svg_image
 
-    return f'<svg width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="{bg_color if bg_color else "none"}" />{svg_without_end_tag}</svg>'
 
 def get_noun(noun_id, seed):
     id = str(noun_id)
@@ -282,9 +281,9 @@ disp.clear()
 noun_image = Image.fromarray(img)
 #noun_image = noun_image.transpose(Image.ROTATE_90)
 
-imageblack_h = Image.new('1',(epd.width ,epd.height),255)
+imageblack_h = Image.new('1',(135 , 240),255)
 imageblack_draw = ImageDraw.Draw(imageblack_h)
-imagered_h = Image.new('1',(epd.width ,epd.height),255)
+imagered_h = Image.new('1',(135 , 240),255)
 imagered_draw = ImageDraw.Draw(imagered_h)
 
 #noun_image = noun_image.resize((140,140))
@@ -292,13 +291,20 @@ imagered_draw = ImageDraw.Draw(imagered_h)
 noun_image = noun_image.transpose(Image.ROTATE_270)
 noun_image = noun_image.resize((240, 240), resample=Image.LANCZOS)
 
+image_bytes = base64.b64decode(image_data.split(",")[1])
+svg_image = build_svg(parts, palette, background)
+svg_image_bytes = io.BytesIO()
+svg_image.save(svg_image_bytes, format='PNG')
+svg_image_bytes.seek(0)
+noun_image = Image.open(svg_image_bytes)
+
 
 #noun_image = noun_image.transpose(Image.ROTATE_90)
 enhancer = ImageEnhance.Contrast(noun_image)
 image = enhancer.enhance(2)
 imagered_h.paste(noun_image,(-15,0))
 
-epd.display(imageblack_h.tobytes(), imagered_h.tobytes())
+disp.display(imageblack_h.tobytes(), imagered_h.tobytes())
 #epd.sleep()
 
 
@@ -343,7 +349,7 @@ while True:
     imageblack_draw.text((10, 190), str(time_str), font=font, fill=0)
         
     # Display the information on the e-ink display
-    epd.display(imageblack_h.tobytes(), imagered_h.tobytes())
+    disp.display(imageblack_h.tobytes(), imagered_h.tobytes())
         
     # Wait for 1 second before updating the display again
     time.sleep(180)
