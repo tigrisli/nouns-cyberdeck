@@ -8,7 +8,7 @@ import cv2
 import cairosvg
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps
-import ST7789 as ST7789
+import ST7789
 from typing import List, Dict
 
 class NounSeed:
@@ -30,26 +30,26 @@ class NounData:
     self.background = background
 
 
-def get_noun_data(seed: NounSeed) -> NounData:
-    global palette
-    # load the image data. This is a json file that contains the image data. Make sure you have the image-data.json file in the same directory as this file.
-    images = json.load(open("image-data.json"))
-    bgcolors = images['bgcolors']
-    palette = images['palette']
-    bodies = images['images']['bodies']
-    accessories = images['images']['accessories']
-    heads = images['images']['heads']
-    glasses = images['images']['glasses']
-    return NounData(
-        parts=[
-            bodies[int(seed['body'])],
-            accessories[int(seed['accessory'])],
-            heads[int(seed['head'])],
-            glasses[int(seed['glasses'])]
-        ],
-        background=tuple(bgcolors[int(seed['background'])])
-    )
 
+def get_noun_data(seed: NounSeed) -> NounData:
+  global palette
+  # load the image data. This is a json file that contains the image data. Make sure you have the image-data.json file in the same directory as this file.
+  images = json.load(open("image-data.json"))
+  bgcolors = images['bgcolors']
+  palette = images['palette']
+  bodies = images['images']['bodies']
+  accessories = images['images']['accessories']
+  heads = images['images']['heads']
+  glasses = images['images']['glasses']
+  return NounData(
+    parts=[
+      bodies[int(seed['body'])],
+      accessories[int(seed['accessory'])],
+      heads[int(seed['head'])],
+      glasses[int(seed['glasses'])]
+    ],
+    background=bgcolors[int(seed['background'])]
+  )
 
 class IEncoder:
     def encode_image(self, filename: str, image):
@@ -148,9 +148,10 @@ def get_rect_length(current_x, draw_length, right_bound):
     remaining_pixels_in_line = right_bound - current_x
     return draw_length if draw_length <= remaining_pixels_in_line else remaining_pixels_in_line
 
+
 def build_svg(parts, palette_colors, bg_color=None):
     svg_image = Image.new('RGBA', (320, 320), bg_color if bg_color else (0, 0, 0, 0))
-    draw = ImageDraw.Draw(svg_image)
+    svg_draw = ImageDraw.Draw(svg_image)
 
     for part in parts:
         decoded_image = decode_image(part["data"])
@@ -160,16 +161,16 @@ def build_svg(parts, palette_colors, bg_color=None):
         current_x = bounds["left"]
         current_y = bounds["top"]
 
-        for draw in rects:
-            draw_length = draw[0]
-            color_index = draw[1]
+        for rect in rects:
+            draw_length = rect[0]
+            color_index = rect[1]
             hex_color = palette_colors[color_index]
 
             length = get_rect_length(current_x, draw_length, bounds["right"])
             while length > 0:
                 if color_index != 0:
                     draw_rect = (current_x * 10, current_y * 10, (current_x + length) * 10, (current_y + 1) * 10)
-                    draw.rectangle(draw_rect, fill=hex_color)
+                    svg_draw.rectangle(draw_rect, fill=hex_color, outline=None)
 
                 current_x += length
                 if current_x == bounds["right"]:
@@ -180,6 +181,7 @@ def build_svg(parts, palette_colors, bg_color=None):
                 length = get_rect_length(current_x, draw_length, bounds["right"])
 
     return svg_image
+
 
 
 def get_noun(noun_id, seed):
@@ -197,6 +199,7 @@ def get_noun(noun_id, seed):
         "description": description,
         "image": image
     }
+
 
 
 # Set the query to fetch the seed data from the Nouns subgraph API
@@ -266,16 +269,16 @@ img = np.array(cv2.imread("noun.png"))
 #img = cv2.resize(img, (8, 8), interpolation = cv2.INTER_CUBIC)
 
 # Initialize the display
-disp = ST7789.ST7789(
+display = ST7789.ST7789(
     port=0,
     cs=ST7789.BG_SPI_CS_FRONT,
     dc=9,
-    backlight=13,
-    rotation=270,
-    spi_speed_hz=80 * 1000 * 1000
+    backlight=19,
+    spi_speed_hz=80_000_000
 )
-disp.begin()
-disp.clear()
+
+display.begin()
+
 
 # Load the resized image + rotate 90
 noun_image = Image.fromarray(img)
@@ -285,26 +288,15 @@ imageblack_h = Image.new('1',(135 , 240),255)
 imageblack_draw = ImageDraw.Draw(imageblack_h)
 imagered_h = Image.new('1',(135 , 240),255)
 imagered_draw = ImageDraw.Draw(imagered_h)
-
-#noun_image = noun_image.resize((140,140))
-#noun_image = noun_image.convert('RGB')
-noun_image = noun_image.transpose(Image.ROTATE_270)
-noun_image = noun_image.resize((240, 240), resample=Image.LANCZOS)
-
-image_bytes = base64.b64decode(image_data.split(",")[1])
-svg_image = build_svg(parts, palette, background)
-svg_image_bytes = io.BytesIO()
-svg_image.save(svg_image_bytes, format='PNG')
-svg_image_bytes.seek(0)
-noun_image = Image.open(svg_image_bytes)
-
-
+noun_image = noun_image.resize((140,140))
+noun_image = noun_image.convert('RGB')
 #noun_image = noun_image.transpose(Image.ROTATE_90)
 enhancer = ImageEnhance.Contrast(noun_image)
 image = enhancer.enhance(2)
 imagered_h.paste(noun_image,(-15,0))
 
-disp.display(imageblack_h.tobytes(), imagered_h.tobytes())
+# Display the information on the LCD display
+display.display(noun_image)
 #epd.sleep()
 
 
@@ -341,16 +333,21 @@ imageblack_draw.text((10, 175), bid, font=font, fill=0)
 
 while True:
     
-
-    time_remaining,time_str = get_time_remaining(start_time, end_time)
+    # Get the time remaining
+    time_remaining, time_str = get_time_remaining(start_time, end_time)
     if time_remaining <= 5:
         break
 
-    imageblack_draw.text((10, 190), str(time_str), font=font, fill=0)
-        
-    # Display the information on the e-ink display
-    disp.display(imageblack_h.tobytes(), imagered_h.tobytes())
+    # Display the time remaining on the LCD display
+    font = ImageFont.truetype('./fonts/LondrinaSolid-Regular.ttf', 16)
+    image = Image.new("RGB", (240, 240), (255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    draw.text((10, 10), "Noun: " + str(noun_number), font=font, fill=(0, 0, 0))
+    draw.text((10, 30), bid, font=font, fill=(0, 0, 0))
+    draw.text((10, 50), "Time Remaining:", font=font, fill=(0, 0, 0))
+    draw.text((10, 70), time_str, font=font, fill=(0, 0, 0))
+    display.display(image)
         
     # Wait for 1 second before updating the display again
-    time.sleep(180)
+    time.sleep(1)
     
