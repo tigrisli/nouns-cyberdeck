@@ -32,24 +32,29 @@ class NounData:
 
 
 def get_noun_data(seed: NounSeed) -> NounData:
-  global palette
-  # load the image data. This is a json file that contains the image data. Make sure you have the image-data.json file in the same directory as this file.
-  images = json.load(open("image-data.json"))
-  bgcolors = images['bgcolors']
-  palette = images['palette']
-  bodies = images['images']['bodies']
-  accessories = images['images']['accessories']
-  heads = images['images']['heads']
-  glasses = images['images']['glasses']
-  return NounData(
-    parts=[
-      bodies[int(seed['body'])],
-      accessories[int(seed['accessory'])],
-      heads[int(seed['head'])],
-      glasses[int(seed['glasses'])]
-    ],
-    background=bgcolors[int(seed['background'])]
-  )
+    global palette
+    # load the image data. This is a json file that contains the image data. Make sure you have the image-data.json file in the same directory as this file.
+    images = json.load(open("image-data.json"))
+    bgcolors = images['bgcolors']
+    palette = images['palette']
+    bodies = images['images']['bodies']
+    accessories = images['images']['accessories']
+    heads = images['images']['heads']
+    glasses = images['images']['glasses']
+    background_index = int(seed.background)
+    if background_index >= len(bgcolors):
+        raise ValueError(f"Invalid background index: {background_index}")
+    background = tuple(bgcolors[background_index]) if bgcolors[background_index] is not None else None
+    return NounData(
+        parts=[
+            bodies[int(seed['body'])],
+            accessories[int(seed['accessory'])],
+            heads[int(seed['head'])],
+            glasses[int(seed['glasses'])]
+        ],
+        background=background
+    )
+
 
 class IEncoder:
     def encode_image(self, filename: str, image):
@@ -150,8 +155,10 @@ def get_rect_length(current_x, draw_length, right_bound):
 
 
 def build_svg(parts, palette_colors, bg_color=None):
+    if bg_color is not None and not isinstance(bg_color, tuple):
+        raise ValueError("bg_color must be a tuple")
     svg_image = Image.new('RGBA', (320, 320), bg_color if bg_color else (0, 0, 0, 0))
-    svg_draw = ImageDraw.Draw(svg_image)
+    draw = ImageDraw.Draw(svg_image)
 
     for part in parts:
         decoded_image = decode_image(part["data"])
@@ -161,16 +168,16 @@ def build_svg(parts, palette_colors, bg_color=None):
         current_x = bounds["left"]
         current_y = bounds["top"]
 
-        for rect in rects:
-            draw_length = rect[0]
-            color_index = rect[1]
+        for draw in rects:
+            draw_length = draw[0]
+            color_index = draw[1]
             hex_color = palette_colors[color_index]
 
             length = get_rect_length(current_x, draw_length, bounds["right"])
             while length > 0:
                 if color_index != 0:
                     draw_rect = (current_x * 10, current_y * 10, (current_x + length) * 10, (current_y + 1) * 10)
-                    svg_draw.rectangle(draw_rect, fill=hex_color, outline=None)
+                    draw.rectangle(draw_rect, fill=hex_color, outline=None)
 
                 current_x += length
                 if current_x == bounds["right"]:
@@ -181,7 +188,6 @@ def build_svg(parts, palette_colors, bg_color=None):
                 length = get_rect_length(current_x, draw_length, bounds["right"])
 
     return svg_image
-
 
 
 def get_noun(noun_id, seed):
